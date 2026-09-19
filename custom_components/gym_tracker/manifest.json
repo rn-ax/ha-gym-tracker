@@ -1,0 +1,11 @@
+{
+  "domain": "gym_tracker",
+  "name": "Gym Tracker",
+  "codeowners": ["@rn-ax"],
+  "config_flow": true,
+  "documentation": "https://github.com/rn-ax/ha-gym-tracker",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/rn-ax/ha-gym-tracker/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
