@@ -1,0 +1,7 @@
+rebuild_cache:
+  name: Rebuild cache
+  description: >-
+    Reset the persisted session-count cache and recompute it from scratch.
+    Use this after editing or deleting a calendar event older than the
+    cache's fold cutoff (~3 months) -- those changes aren't picked up
+    automatically otherwise.

@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "calendar_entity": "Calendar",
+          "tracked_person": "Tracked person",
+          "gym_zones": "Gym zones"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This calendar is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Add or update a month's cost",
+        "data": {
+          "year": "Year",
+          "month": "Month",
+          "monthly_cost": "Monthly cost (EUR)"
+        }
+      }
+    }
+  },
+  "issues": {
+    "missing_monthly_cost": {
+      "title": "Missing gym cost for {month}/{year}",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Enter this month's gym cost",
+            "description": "No cost has been entered yet for {month}/{year}. The cost-per-session sensor stays unavailable until this is set.",
+            "data": {
+              "year": "Year",
+              "month": "Month",
+              "monthly_cost": "Monthly cost (EUR)"
+            }
+          }
+        }
+      }
+    }
+  }
+}
