@@ -43,13 +43,6 @@ class GymSessionOngoingBinarySensor(
         self._attr_unique_id = f"{entry_id}_session_ongoing"
 
     @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry_id)},
-            "name": "Gym Tracker",
-        }
-
-    @property
     def is_on(self) -> bool:
         return bool(self.coordinator.data["session_ongoing"])
 

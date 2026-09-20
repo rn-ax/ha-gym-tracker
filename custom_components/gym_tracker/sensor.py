@@ -29,18 +29,19 @@ async def async_setup_entry(
 
 
 class _GymSensorBase(CoordinatorEntity[GymTrackerCoordinator], SensorEntity):
-    """Shared device grouping for every entity this integration creates."""
+    """Shared base for every sensor this integration creates.
+
+    Deliberately no `device_info`: HA's entity-naming logic prefixes the
+    device name onto the displayed friendly_name for an auto-named entity
+    (one with no user-set registry `name` override) regardless of
+    `has_entity_name`, so grouping under a device produced e.g. "Gym
+    Tracker Gym session streak" instead of "Gym session streak". Without a
+    device there's nothing to prefix with.
+    """
 
     def __init__(self, coordinator: GymTrackerCoordinator, entry_id: str) -> None:
         super().__init__(coordinator)
         self._entry_id = entry_id
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry_id)},
-            "name": "Gym Tracker",
-        }
 
 
 class GymSessionsTotalSensor(_GymSensorBase):

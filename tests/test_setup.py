@@ -76,5 +76,14 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
     assert cost is not None and float(cost.state) == round(59.90 * 12 / 2, 2)
     assert ongoing is not None and ongoing.state == "off"
 
+    # No device grouping -- HA's naming logic prefixes the device name onto
+    # an auto-named entity's displayed friendly_name regardless of
+    # has_entity_name, so a device here would produce e.g. "Gym Tracker Gym
+    # session streak" instead of "Gym session streak".
+    assert total.attributes["friendly_name"] == "Gym sessions total"
+    assert streak.attributes["friendly_name"] == "Gym session streak"
+    assert cost.attributes["friendly_name"] == "Gym cost per session"
+    assert ongoing.attributes["friendly_name"] == "Gym session ongoing"
+
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
