@@ -1,0 +1,6 @@
+_extends: poppycock
+
+repository:
+  name: ha-gym-tracker
+  description: Home Assistant custom integration for gym session tracking (calendar-based sessions, streak, cost-per-session, zone auto-detection)
+  private: false
