@@ -45,7 +45,9 @@ async def test_entering_zone_and_staying_starts_session_after_debounce(
         await hass.async_block_till_done()
         assert coordinator._session_ongoing is False  # debounce hasn't elapsed yet
 
-        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=5, seconds=1))
+        async_fire_time_changed(
+            hass, dt_util.utcnow() + timedelta(minutes=5, seconds=1)
+        )
         await hass.async_block_till_done()
         assert coordinator._session_ongoing is True
     finally:
@@ -60,7 +62,9 @@ async def test_brief_zone_visit_does_not_start_session(hass: HomeAssistant):
         hass.states.async_set("person.samuel", "home")
         await hass.async_block_till_done()
 
-        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=5, seconds=1))
+        async_fire_time_changed(
+            hass, dt_util.utcnow() + timedelta(minutes=5, seconds=1)
+        )
         await hass.async_block_till_done()
         assert coordinator._session_ongoing is False
     finally:
@@ -77,7 +81,9 @@ async def test_leaving_zone_ends_session_and_creates_calendar_event(
     try:
         hass.states.async_set("person.samuel", "Gym Blomstringe")
         await hass.async_block_till_done()
-        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=5, seconds=1))
+        async_fire_time_changed(
+            hass, dt_util.utcnow() + timedelta(minutes=5, seconds=1)
+        )
         await hass.async_block_till_done()
         assert coordinator._session_ongoing is True
 

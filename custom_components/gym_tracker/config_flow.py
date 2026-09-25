@@ -19,17 +19,19 @@ from .const import (
     DOMAIN,
 )
 
-STEP_USER_SCHEMA = vol.Schema({
-    vol.Required(CONF_CALENDAR_ENTITY): selector.EntitySelector(
-        selector.EntitySelectorConfig(domain="calendar")
-    ),
-    vol.Required(CONF_TRACKED_PERSON): selector.EntitySelector(
-        selector.EntitySelectorConfig(domain="person")
-    ),
-    vol.Required(CONF_GYM_ZONES): selector.EntitySelector(
-        selector.EntitySelectorConfig(domain="zone", multiple=True)
-    ),
-})
+STEP_USER_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_CALENDAR_ENTITY): selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="calendar")
+        ),
+        vol.Required(CONF_TRACKED_PERSON): selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="person")
+        ),
+        vol.Required(CONF_GYM_ZONES): selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="zone", multiple=True)
+        ),
+    }
+)
 
 
 def monthly_cost_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
@@ -39,13 +41,17 @@ def monthly_cost_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     the two paths can't drift apart.
     """
     defaults = defaults or {}
-    return vol.Schema({
-        vol.Required(CONF_YEAR, default=defaults.get(CONF_YEAR, vol.UNDEFINED)): int,
-        vol.Required(
-            CONF_MONTH, default=defaults.get(CONF_MONTH, vol.UNDEFINED)
-        ): vol.All(int, vol.Range(min=1, max=12)),
-        vol.Required(CONF_MONTHLY_COST): vol.Coerce(float),
-    })
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_YEAR, default=defaults.get(CONF_YEAR, vol.UNDEFINED)
+            ): int,
+            vol.Required(
+                CONF_MONTH, default=defaults.get(CONF_MONTH, vol.UNDEFINED)
+            ): vol.All(int, vol.Range(min=1, max=12)),
+            vol.Required(CONF_MONTHLY_COST): vol.Coerce(float),
+        }
+    )
 
 
 class GymTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -53,7 +59,9 @@ class GymTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         if user_input is not None:
             await self.async_set_unique_id(user_input[CONF_CALENDAR_ENTITY])
             self._abort_if_unique_id_configured()
@@ -76,7 +84,9 @@ class GymTrackerOptionsFlow(config_entries.OptionsFlow):
     the same year/month to overwrite it.
     """
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         if user_input is not None:
             key = f"{user_input[CONF_YEAR]:04d}-{user_input[CONF_MONTH]:02d}"
             monthly_costs = dict(self.config_entry.options.get("monthly_costs", {}))

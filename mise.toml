@@ -1,3 +1,10 @@
 [tools]
 python = "3.13"
 uv = "0.12.19"
+ruff = "0.16.9"
+
+[tasks.lint]
+run = "ruff check ."
+
+[tasks.format]
+run = "ruff format ."

@@ -21,11 +21,13 @@ async def async_setup_entry(
 ) -> None:
     coordinator: GymTrackerCoordinator = hass.data[DOMAIN][entry.entry_id].coordinator
 
-    async_add_entities([
-        GymSessionsTotalSensor(coordinator, entry.entry_id),
-        GymSessionStreakSensor(coordinator, entry.entry_id),
-        GymCostPerSessionSensor(coordinator, entry.entry_id),
-    ])
+    async_add_entities(
+        [
+            GymSessionsTotalSensor(coordinator, entry.entry_id),
+            GymSessionStreakSensor(coordinator, entry.entry_id),
+            GymCostPerSessionSensor(coordinator, entry.entry_id),
+        ]
+    )
 
 
 class _GymSensorBase(CoordinatorEntity[GymTrackerCoordinator], SensorEntity):
