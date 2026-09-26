@@ -24,8 +24,10 @@ async def async_setup_entry(
     async_add_entities(
         [
             GymSessionsTotalSensor(coordinator, entry.entry_id),
+            GymSessionsThisYearSensor(coordinator, entry.entry_id),
             GymSessionStreakSensor(coordinator, entry.entry_id),
             GymCostPerSessionSensor(coordinator, entry.entry_id),
+            GymYearlyStatsSensor(coordinator, entry.entry_id),
         ]
     )
 
@@ -71,6 +73,26 @@ class GymSessionsTotalSensor(_GymSensorBase):
         return self.coordinator.data["total_sessions"]
 
 
+class GymSessionsThisYearSensor(_GymSensorBase):
+    # New (not a legacy AppDaemon entity_id) -- the old system never
+    # exposed a year-scoped count, only the all-time total, which is what
+    # led to dashboards mislabeling that all-time total as "this year".
+    entity_id = "sensor.gym_sessions_this_year"
+    _attr_has_entity_name = False
+    _attr_name = "Gym sessions this year"
+    _attr_icon = "mdi:dumbbell"
+    _attr_native_unit_of_measurement = "sessions"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry_id):
+        super().__init__(coordinator, entry_id)
+        self._attr_unique_id = f"{entry_id}_sessions_this_year"
+
+    @property
+    def native_value(self):
+        return self.coordinator.data["sessions_this_year"]
+
+
 class GymSessionStreakSensor(_GymSensorBase):
     entity_id = "sensor.gym_session_streak"
     _attr_has_entity_name = False
@@ -86,6 +108,35 @@ class GymSessionStreakSensor(_GymSensorBase):
     @property
     def native_value(self):
         return self.coordinator.data["streak"]
+
+
+class GymYearlyStatsSensor(_GymSensorBase):
+    """One row per tracked calendar year, for a dashboard table card.
+
+    The state is just the row count -- the actual data (year, sessions,
+    avg_per_week, total_cost, cost_per_session per row) lives in the
+    `years` attribute, which a card like flex-table-card's `attr_as_list`
+    can expand into a table with no other Home Assistant plumbing needed.
+    """
+
+    entity_id = "sensor.gym_yearly_stats"
+    _attr_has_entity_name = False
+    _attr_name = "Gym yearly stats"
+    _attr_icon = "mdi:table"
+    _attr_native_unit_of_measurement = "years"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry_id):
+        super().__init__(coordinator, entry_id)
+        self._attr_unique_id = f"{entry_id}_yearly_stats"
+
+    @property
+    def native_value(self):
+        return len(self.coordinator.data["yearly_stats"])
+
+    @property
+    def extra_state_attributes(self):
+        return {"years": self.coordinator.data["yearly_stats"]}
 
 
 class GymCostPerSessionSensor(_GymSensorBase):

@@ -1,6 +1,6 @@
 # ha-gym-tracker
 
-A Home Assistant **custom integration** (`custom_components/gym_tracker/`) that turns a calendar of workout events into three sensors (total sessions, day streak, cost per session), plus zone-based auto-detection that creates those calendar events without any manual logging.
+A Home Assistant **custom integration** (`custom_components/gym_tracker/`) that turns a calendar of workout events into sensors (all-time total sessions, sessions this year, day streak, cost per session, a per-year stats table), plus zone-based auto-detection that creates those calendar events without any manual logging.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Everything is event-driven through a `DataUpdateCoordinator` with `update_interv
 - The configured `calendar` entity's native `calendar.add_event` / `calendar.remove_event` events, so a manually-added calendar entry (a walk, a gym visit typed in by hand) is picked up the same way an auto-detected one is.
 - A daily tick just after midnight, so the streak sensor actually decays to 0 the day after a missed day instead of staying frozen until the next calendar change.
 
-All three sensors' actual math lives in `calculations.py`, which has zero Home Assistant imports on purpose — it's what `tests/test_calculations.py` exercises directly, no HA test harness needed.
+Every sensor's actual math lives in `calculations.py`, which has zero Home Assistant imports on purpose — it's what `tests/test_calculations.py` exercises directly, no HA test harness needed.
 
 ## Caching
 
@@ -26,7 +26,9 @@ This integration's code goes to `/config/custom_components/gym_tracker/` on what
 
 ## Legacy entity_ids
 
-`sensor.gym_sessions_total`, `sensor.gym_session_streak`, and `sensor.gym_cost_per_session` deliberately match the entity_ids from the AppDaemon apps this integration replaces (`_attr_has_entity_name = False` with a name that slugifies to the same id), so existing dashboards keep working across the migration. `binary_sensor.gym_session_ongoing` is new — it replaces `input_boolean.gym_session_ongoing` from the old zone-detection automations, and carries a `session_start` attribute for a possible future iOS Live Activity automation to use.
+`sensor.gym_sessions_total`, `sensor.gym_session_streak`, and `sensor.gym_cost_per_session` deliberately match the entity_ids from the AppDaemon apps this integration replaces (`_attr_has_entity_name = False` with a name that slugifies to the same id), so existing dashboards keep working across the migration. `binary_sensor.gym_session_ongoing` is new — it replaces `input_boolean.gym_session_ongoing` from the old zone-detection automations, and carries a `session_start` attribute for a possible future iOS Live Activity automation to use. `sensor.gym_sessions_this_year` is also new — the AppDaemon apps never exposed a year-scoped count, only the all-time total, which is what led dashboards to bind a "this year" tile to `sensor.gym_sessions_total` by mistake.
+
+`sensor.gym_yearly_stats` is a table-shaped sensor: its state is just the number of tracked years, and the real data is a `years` attribute (a list of `{year, sessions, avg_per_week, total_cost, cost_per_session}` dicts, newest year first) meant for a dashboard table card such as HACS's `flex-table-card` (its `attr_as_list` column option expands a list-valued attribute into rows). Per-year `total_cost`/`cost_per_session` come from summing whatever `monthly_costs` entries fall in that year, and are `null` for a year with no cost data at all rather than reporting a misleading `0`. There's no per-year longest-streak column — years older than the cache-fold cutoff are stored as plain counts, not individual dates, so there's nothing to compute a streak from.
 
 ## Integration structure
 
@@ -39,7 +41,7 @@ custom_components/gym_tracker/
   coordinator.py      # event-driven DataUpdateCoordinator: zone detection, calendar listening, daily tick, caching
   config_flow.py      # setup form + options flow (monthly cost) + the shared schema repairs.py reuses
   repairs.py          # fix flow for the "missing current month's cost" issue
-  sensor.py            # the three legacy-entity_id sensors
+  sensor.py            # the total/this-year/streak/cost/yearly-stats sensors
   binary_sensor.py     # session-ongoing sensor
   services.yaml         # rebuild_cache service definition
 ```

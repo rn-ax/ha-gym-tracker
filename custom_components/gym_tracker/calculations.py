@@ -67,3 +67,56 @@ def compute_cost_per_session(
     if monthly_cost is None or sessions_this_year <= 0:
         return None
     return round((monthly_cost * 12) / sessions_this_year, 2)
+
+
+def compute_yearly_stats(
+    sessions_by_year_before_cutoff: dict[str, int],
+    gym_dates_after_cutoff: set[date],
+    monthly_costs: dict[str, float],
+    today: date,
+) -> list[dict[str, Any]]:
+    """One summary row per calendar year with any tracked gym session.
+
+    Folded years are cached as plain counts, not raw dates (see
+    coordinator.py), so a row can only report what that shape of data
+    supports: a session count, a weekly-pace average, and cost/session --
+    not a per-year longest streak, which would need the individual dates.
+    Rows are newest year first, matching how the dashboard table reads.
+    """
+    years = set(sessions_by_year_before_cutoff) | {
+        str(d.year) for d in gym_dates_after_cutoff
+    }
+
+    rows = []
+    for year_key in sorted(years, reverse=True):
+        year = int(year_key)
+        sessions = sessions_by_year_before_cutoff.get(year_key, 0) + sum(
+            1 for d in gym_dates_after_cutoff if d.year == year
+        )
+
+        year_costs = [
+            cost
+            for month_key, cost in monthly_costs.items()
+            if month_key.startswith(f"{year_key}-")
+        ]
+        total_cost = round(sum(year_costs), 2) if year_costs else None
+
+        if year == today.year:
+            weeks_elapsed = ((today - date(year, 1, 1)).days + 1) / 7
+        else:
+            weeks_elapsed = 365.25 / 7
+
+        rows.append(
+            {
+                "year": year,
+                "sessions": sessions,
+                "avg_per_week": round(sessions / weeks_elapsed, 1),
+                "total_cost": total_cost,
+                "cost_per_session": (
+                    round(total_cost / sessions, 2)
+                    if total_cost and sessions
+                    else None
+                ),
+            }
+        )
+    return rows

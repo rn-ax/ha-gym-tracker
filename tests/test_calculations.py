@@ -8,6 +8,7 @@ from datetime import date
 from custom_components.gym_tracker.calculations import (
     compute_cost_per_session,
     compute_streak,
+    compute_yearly_stats,
     dedupe_event_dates,
 )
 
@@ -90,3 +91,47 @@ class TestComputeCostPerSession:
 
     def test_result_is_rounded_to_cents(self):
         assert compute_cost_per_session(59.90, sessions_this_year=7) == 102.69
+
+
+class TestComputeYearlyStats:
+    def test_rows_are_newest_year_first(self):
+        rows = compute_yearly_stats(
+            {"2023": 10, "2024": 20}, dates("2025-01-05"), {}, TODAY
+        )
+        assert [r["year"] for r in rows] == [2025, 2024, 2023]
+
+    def test_sessions_combine_cache_and_after_cutoff_dates(self):
+        rows = compute_yearly_stats(
+            {"2025": 50},
+            dates("2025-11-01", "2025-11-05", "2024-12-31"),
+            {},
+            TODAY,
+        )
+        by_year = {r["year"]: r["sessions"] for r in rows}
+        assert by_year[2025] == 52  # 50 cached + 2 after cutoff
+        assert by_year[2024] == 1  # only the after-cutoff date
+
+    def test_no_cost_data_leaves_cost_fields_none(self):
+        row = compute_yearly_stats({"2024": 100}, set(), {}, TODAY)[0]
+        assert row["total_cost"] is None
+        assert row["cost_per_session"] is None
+
+    def test_cost_summed_across_the_years_own_months(self):
+        rows = compute_yearly_stats(
+            {"2024": 100},
+            set(),
+            {"2024-01": 50.0, "2024-02": 50.0, "2025-01": 999.0},
+            TODAY,
+        )
+        row = next(r for r in rows if r["year"] == 2024)
+        assert row["total_cost"] == 100.0
+        assert row["cost_per_session"] == 1.0
+
+    def test_avg_per_week_for_a_past_full_year(self):
+        row = compute_yearly_stats({"2024": 104}, set(), {}, TODAY)[0]
+        assert row["avg_per_week"] == round(104 / (365.25 / 7), 1)
+
+    def test_avg_per_week_for_current_year_uses_elapsed_days(self):
+        row = compute_yearly_stats({}, dates("2025-01-05"), {}, TODAY)[0]
+        elapsed_weeks = ((TODAY - date(2025, 1, 1)).days + 1) / 7
+        assert row["avg_per_week"] == round(1 / elapsed_weeks, 1)

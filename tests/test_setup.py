@@ -1,11 +1,11 @@
 """End-to-end smoke test: real async_setup_entry, real platforms.
 
-Verifies the one thing no other test checks -- that the three sensors
-actually land on the legacy entity_ids (sensor.gym_sessions_total etc.)
-dashboards depend on, and that they reflect real (faked) calendar data.
+Verifies the one thing no other test checks -- that the sensors actually
+land on their entity_ids (the legacy ones dashboards depend on, plus the
+newer ones) and reflect real (faked) calendar data.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 from homeassistant.core import (
     HomeAssistant,
@@ -70,22 +70,37 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
     await hass.async_block_till_done()
 
     total = hass.states.get("sensor.gym_sessions_total")
+    this_year = hass.states.get("sensor.gym_sessions_this_year")
     streak = hass.states.get("sensor.gym_session_streak")
     cost = hass.states.get("sensor.gym_cost_per_session")
     ongoing = hass.states.get("binary_sensor.gym_session_ongoing")
+    yearly = hass.states.get("sensor.gym_yearly_stats")
 
     assert total is not None and total.state == "2"  # two "Gym"-summary days
+    assert this_year is not None and this_year.state == "2"  # both are this year
     # 3: today + yesterday (Gym) + the day before (Walk) -- a walk still
     # counts toward the streak, just not toward the gym-specific total/cost.
     assert streak is not None and streak.state == "3"
     assert cost is not None and float(cost.state) == round(59.90 * 12 / 2, 2)
     assert ongoing is not None and ongoing.state == "off"
+    weeks_elapsed_this_year = ((today - date(today.year, 1, 1)).days + 1) / 7
+    assert yearly is not None and yearly.state == "1"  # one tracked year so far
+    assert yearly.attributes["years"] == [
+        {
+            "year": today.year,
+            "sessions": 2,
+            "avg_per_week": round(2 / weeks_elapsed_this_year, 1),
+            "total_cost": 59.90,
+            "cost_per_session": round(59.90 / 2, 2),
+        }
+    ]
 
     # No device grouping -- HA's naming logic prefixes the device name onto
     # an auto-named entity's displayed friendly_name regardless of
     # has_entity_name, so a device here would produce e.g. "Gym Tracker Gym
     # session streak" instead of "Gym session streak".
     assert total.attributes["friendly_name"] == "Gym sessions total"
+    assert this_year.attributes["friendly_name"] == "Gym sessions this year"
     assert streak.attributes["friendly_name"] == "Gym session streak"
     assert cost.attributes["friendly_name"] == "Gym cost per session"
     assert ongoing.attributes["friendly_name"] == "Gym session ongoing"
