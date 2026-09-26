@@ -5,9 +5,14 @@ actually land on the legacy entity_ids (sensor.gym_sessions_total etc.)
 dashboards depend on, and that they reflect real (faked) calendar data.
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 

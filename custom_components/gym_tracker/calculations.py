@@ -8,11 +8,11 @@ spinning up any part of HA.
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 
 def dedupe_event_dates(
-    events: list[dict[str, Any]], summary_filter: Optional[str] = None
+    events: list[dict[str, Any]], summary_filter: str | None = None
 ) -> set[date]:
     """Return the set of unique calendar days covered by `events`.
 
@@ -56,8 +56,8 @@ def compute_streak(all_dates: set[date], today: date) -> int:
 
 
 def compute_cost_per_session(
-    monthly_cost: Optional[float], sessions_this_year: int
-) -> Optional[float]:
+    monthly_cost: float | None, sessions_this_year: int
+) -> float | None:
     """Annualize `monthly_cost` and split it across this year's sessions.
 
     Returns None (the sensor goes unavailable, not an error) when there's

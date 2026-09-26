@@ -21,9 +21,7 @@ VALID_USER_INPUT = {
 
 
 async def test_user_flow_creates_entry(hass: HomeAssistant, enable_custom_integrations):
-    with patch(
-        "custom_components.gym_tracker.async_setup_entry", return_value=True
-    ):
+    with patch("custom_components.gym_tracker.async_setup_entry", return_value=True):
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
@@ -38,14 +36,16 @@ async def test_user_flow_creates_entry(hass: HomeAssistant, enable_custom_integr
     assert result["data"] == VALID_USER_INPUT
 
 
-async def test_duplicate_calendar_aborts(hass: HomeAssistant, enable_custom_integrations):
-    with patch(
-        "custom_components.gym_tracker.async_setup_entry", return_value=True
-    ):
+async def test_duplicate_calendar_aborts(
+    hass: HomeAssistant, enable_custom_integrations
+):
+    with patch("custom_components.gym_tracker.async_setup_entry", return_value=True):
         first = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )
-        await hass.config_entries.flow.async_configure(first["flow_id"], VALID_USER_INPUT)
+        await hass.config_entries.flow.async_configure(
+            first["flow_id"], VALID_USER_INPUT
+        )
 
         second = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": config_entries.SOURCE_USER}
@@ -61,9 +61,7 @@ async def test_duplicate_calendar_aborts(hass: HomeAssistant, enable_custom_inte
 async def test_options_flow_upserts_monthly_cost(
     hass: HomeAssistant, enable_custom_integrations
 ):
-    with patch(
-        "custom_components.gym_tracker.async_setup_entry", return_value=True
-    ):
+    with patch("custom_components.gym_tracker.async_setup_entry", return_value=True):
         flow_result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": config_entries.SOURCE_USER}
         )

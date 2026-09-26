@@ -26,7 +26,9 @@ class TestComputeStreak:
         assert compute_streak(dates("2025-11-09"), TODAY) == 1
 
     def test_streak_breaks_after_one_day_gap(self):
-        assert compute_streak(dates("2025-11-09", "2025-11-07", "2025-11-06"), TODAY) == 1
+        assert (
+            compute_streak(dates("2025-11-09", "2025-11-07", "2025-11-06"), TODAY) == 1
+        )
 
     def test_continuous_streak(self):
         assert (

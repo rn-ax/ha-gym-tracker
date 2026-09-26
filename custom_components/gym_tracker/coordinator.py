@@ -79,7 +79,9 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
         )
         self._unsub.append(
-            self.hass.bus.async_listen("calendar.add_event", self._handle_calendar_event)
+            self.hass.bus.async_listen(
+                "calendar.add_event", self._handle_calendar_event
+            )
         )
         self._unsub.append(
             self.hass.bus.async_listen(
@@ -217,11 +219,13 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         await self._save_cache()
 
     async def _save_cache(self) -> None:
-        await self._store.async_save({
-            "cutoff": self._cutoff.isoformat(),
-            "gym_sessions_before_cutoff": self._gym_sessions_before_cutoff,
-            "gym_sessions_by_year_before_cutoff": self._gym_sessions_by_year_before_cutoff,
-        })
+        await self._store.async_save(
+            {
+                "cutoff": self._cutoff.isoformat(),
+                "gym_sessions_before_cutoff": self._gym_sessions_before_cutoff,
+                "gym_sessions_by_year_before_cutoff": self._gym_sessions_by_year_before_cutoff,
+            }
+        )
 
     async def async_rebuild_cache(self) -> None:
         """Reset the cache and force a full recompute from scratch.
@@ -262,7 +266,8 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         streak_dates = {d for d in all_dates if d >= streak_window_start}
 
         gym_dates_after_cutoff = {
-            d for d in dedupe_event_dates(events, summary_filter=GYM_EVENT_SUMMARY)
+            d
+            for d in dedupe_event_dates(events, summary_filter=GYM_EVENT_SUMMARY)
             if d >= self._cutoff
         }
         total_sessions = self._gym_sessions_before_cutoff + len(gym_dates_after_cutoff)
@@ -280,7 +285,9 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return {
             "total_sessions": total_sessions,
             "streak": compute_streak(streak_dates, today),
-            "cost_per_session": compute_cost_per_session(monthly_cost, sessions_this_year),
+            "cost_per_session": compute_cost_per_session(
+                monthly_cost, sessions_this_year
+            ),
             "session_ongoing": self._session_ongoing,
             "session_start": self._session_start,
         }
