@@ -25,6 +25,7 @@ from homeassistant.util import dt as dt_util
 from .calculations import (
     compute_cost_per_session,
     compute_streak,
+    compute_weekly_sessions,
     compute_yearly_stats,
     dedupe_event_dates,
     format_monthly_payments,
@@ -41,6 +42,7 @@ from .const import (
     GYM_EVENT_SUMMARY,
     SESSION_START_DEBOUNCE_MINUTES,
     STREAK_LOOKBACK_DAYS,
+    WEEKLY_CHART_WEEKS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -306,6 +308,9 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ),
             "yearly_stats": yearly_stats,
             "monthly_payments": format_monthly_payments(monthly_costs),
+            "weekly_sessions": compute_weekly_sessions(
+                gym_dates_after_cutoff, today, WEEKLY_CHART_WEEKS
+            ),
             "session_ongoing": self._session_ongoing,
             "session_start": self._session_start,
         }

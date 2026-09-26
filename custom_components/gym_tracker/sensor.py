@@ -28,6 +28,7 @@ async def async_setup_entry(
             GymSessionStreakSensor(coordinator, entry.entry_id),
             GymCostPerSessionSensor(coordinator, entry.entry_id),
             GymYearlyStatsSensor(coordinator, entry.entry_id),
+            GymWeeklySessionsSensor(coordinator, entry.entry_id),
         ]
     )
 
@@ -141,6 +142,38 @@ class GymYearlyStatsSensor(_GymSensorBase):
             "years": self.coordinator.data["yearly_stats"],
             "payments": self.coordinator.data["monthly_payments"],
         }
+
+
+class GymWeeklySessionsSensor(_GymSensorBase):
+    """Trailing weekly session counts, for a dashboard trend chart.
+
+    The state is the total across the whole window -- the actual series
+    lives in the `weeks` attribute (`week_start`, `sessions` per row,
+    oldest first), shaped for a card like apexcharts-card's
+    `data_generator` to turn into a bar/line chart with no separate
+    history-tracked entity needed per week.
+    """
+
+    entity_id = "sensor.gym_weekly_sessions"
+    _attr_has_entity_name = False
+    _attr_name = "Gym weekly sessions"
+    _attr_icon = "mdi:chart-bar"
+    _attr_native_unit_of_measurement = "sessions"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry_id):
+        super().__init__(coordinator, entry_id)
+        self._attr_unique_id = f"{entry_id}_weekly_sessions"
+
+    @property
+    def native_value(self):
+        return sum(
+            week["sessions"] for week in self.coordinator.data["weekly_sessions"]
+        )
+
+    @property
+    def extra_state_attributes(self):
+        return {"weeks": self.coordinator.data["weekly_sessions"]}
 
 
 class GymCostPerSessionSensor(_GymSensorBase):

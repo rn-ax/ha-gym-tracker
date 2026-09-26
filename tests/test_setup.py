@@ -75,6 +75,7 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
     cost = hass.states.get("sensor.gym_cost_per_session")
     ongoing = hass.states.get("binary_sensor.gym_session_ongoing")
     yearly = hass.states.get("sensor.gym_yearly_stats")
+    weekly = hass.states.get("sensor.gym_weekly_sessions")
 
     assert total is not None and total.state == "2"  # two "Gym"-summary days
     assert this_year is not None and this_year.state == "2"  # both are this year
@@ -97,6 +98,21 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
     assert yearly.attributes["payments"] == [
         {"year": today.year, "month": today.month, "cost": 59.90}
     ]
+    # Both Gym days fall inside the 12-week window regardless of which
+    # calendar week each one lands in, so the total is always 2 -- but
+    # which week bucket gets which count depends on today's weekday (the
+    # two dates can straddle a Mon/Sun boundary), so that split is computed
+    # rather than hardcoded.
+    assert weekly is not None and weekly.state == "2"
+    current_week_start = today - timedelta(days=today.weekday())
+    yesterday = today - timedelta(days=1)
+    current_week_sessions = sum(
+        1 for d in (today, yesterday) if d >= current_week_start
+    )
+    assert weekly.attributes["weeks"][-1] == {
+        "week_start": current_week_start.isoformat(),
+        "sessions": current_week_sessions,
+    }
 
     # No device grouping -- HA's naming logic prefixes the device name onto
     # an auto-named entity's displayed friendly_name regardless of
