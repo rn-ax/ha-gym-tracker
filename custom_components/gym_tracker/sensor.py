@@ -111,12 +111,13 @@ class GymSessionStreakSensor(_GymSensorBase):
 
 
 class GymYearlyStatsSensor(_GymSensorBase):
-    """One row per tracked calendar year, for a dashboard table card.
+    """Table data for the dashboard: one row per year, one row per payment.
 
-    The state is just the row count -- the actual data (year, sessions,
-    avg_per_week, total_cost, cost_per_session per row) lives in the
-    `years` attribute, which a card like flex-table-card's `attr_as_list`
-    can expand into a table with no other Home Assistant plumbing needed.
+    The state is just the tracked-year count -- the actual data lives in
+    two attributes, `years` (year, sessions, avg_per_week, total_cost,
+    cost_per_session) and `payments` (year, month, cost -- the raw monthly
+    log), each shaped for a card like flex-table-card's `attr_as_list` to
+    expand into a table with no other Home Assistant plumbing needed.
     """
 
     entity_id = "sensor.gym_yearly_stats"
@@ -136,7 +137,10 @@ class GymYearlyStatsSensor(_GymSensorBase):
 
     @property
     def extra_state_attributes(self):
-        return {"years": self.coordinator.data["yearly_stats"]}
+        return {
+            "years": self.coordinator.data["yearly_stats"],
+            "payments": self.coordinator.data["monthly_payments"],
+        }
 
 
 class GymCostPerSessionSensor(_GymSensorBase):

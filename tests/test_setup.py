@@ -94,6 +94,9 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
             "cost_per_session": round(59.90 / 2, 2),
         }
     ]
+    assert yearly.attributes["payments"] == [
+        {"year": today.year, "month": today.month, "cost": 59.90}
+    ]
 
     # No device grouping -- HA's naming logic prefixes the device name onto
     # an auto-named entity's displayed friendly_name regardless of
