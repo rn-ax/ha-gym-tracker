@@ -93,6 +93,25 @@ def months_missing_cost(
     return missing
 
 
+def compute_weekly_sessions(
+    gym_dates: set[date], today: date, num_weeks: int
+) -> list[dict[str, Any]]:
+    """Session counts for the trailing `num_weeks` ISO weeks (Mon-Sun), oldest first.
+
+    The most recent entry is the current, still-in-progress week -- a
+    dashboard trend chart should show the count building up "as of now"
+    rather than stopping at the last fully-completed week.
+    """
+    current_week_start = today - timedelta(days=today.weekday())
+    weeks = []
+    for weeks_ago in range(num_weeks - 1, -1, -1):
+        week_start = current_week_start - timedelta(weeks=weeks_ago)
+        week_end = week_start + timedelta(days=6)
+        sessions = sum(1 for d in gym_dates if week_start <= d <= week_end)
+        weeks.append({"week_start": week_start.isoformat(), "sessions": sessions})
+    return weeks
+
+
 def format_monthly_payments(monthly_costs: dict[str, float]) -> list[dict[str, Any]]:
     """Turn `monthly_costs` into a dashboard-ready row list, newest first.
 

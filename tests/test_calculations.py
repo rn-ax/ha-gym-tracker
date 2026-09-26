@@ -3,11 +3,12 @@
 No Home Assistant test harness needed here -- these are plain functions.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 from custom_components.gym_tracker.calculations import (
     compute_cost_per_session,
     compute_streak,
+    compute_weekly_sessions,
     compute_yearly_stats,
     dedupe_event_dates,
     format_monthly_payments,
@@ -183,3 +184,38 @@ class TestFormatMonthlyPayments:
     def test_row_shape_and_cost_value(self):
         rows = format_monthly_payments({"2025-06": 67.90})
         assert rows == [{"year": 2025, "month": 6, "cost": 67.90}]
+
+
+class TestComputeWeeklySessions:
+    def test_returns_num_weeks_consecutive_rows_oldest_first(self):
+        weeks = compute_weekly_sessions(set(), TODAY, num_weeks=12)
+        assert len(weeks) == 12
+        starts = [date.fromisoformat(w["week_start"]) for w in weeks]
+        assert starts == sorted(starts)
+        assert all((starts[i + 1] - starts[i]).days == 7 for i in range(11))
+
+    def test_last_row_is_the_current_in_progress_week(self):
+        weeks = compute_weekly_sessions(set(), TODAY, num_weeks=12)
+        last_start = date.fromisoformat(weeks[-1]["week_start"])
+        assert last_start.weekday() == 0  # Monday
+        assert last_start <= TODAY <= last_start + timedelta(days=6)
+
+    def test_counts_sessions_within_each_week(self):
+        current_week_start = TODAY - timedelta(days=TODAY.weekday())
+        gym_dates = {
+            current_week_start,  # this week
+            current_week_start - timedelta(days=1),  # last week's Sunday
+            current_week_start - timedelta(weeks=1),  # last week's Monday
+        }
+        weeks = compute_weekly_sessions(gym_dates, TODAY, num_weeks=2)
+        assert weeks[0]["sessions"] == 2  # last week
+        assert weeks[1]["sessions"] == 1  # this week
+
+    def test_dates_outside_the_window_are_ignored(self):
+        current_week_start = TODAY - timedelta(days=TODAY.weekday())
+        old_date = current_week_start - timedelta(weeks=5)
+        weeks = compute_weekly_sessions({old_date}, TODAY, num_weeks=2)
+        assert sum(w["sessions"] for w in weeks) == 0
+
+    def test_zero_weeks_requested_returns_empty(self):
+        assert compute_weekly_sessions(set(), TODAY, num_weeks=0) == []

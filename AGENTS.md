@@ -30,6 +30,8 @@ This integration's code goes to `/config/custom_components/gym_tracker/` on what
 
 `sensor.gym_yearly_stats` is a table-shaped sensor: its state is just the number of tracked years, and the real data lives in two attributes, both meant for a dashboard table card such as HACS's `flex-table-card` (its `attr_as_list` column option expands a list-valued attribute into rows). `years` is a list of `{year, sessions, avg_per_week, total_cost, cost_per_session}` dicts, newest year first; per-year `total_cost`/`cost_per_session` come from summing whatever `monthly_costs` entries fall in that year, and are `null` for a year with no cost data at all rather than reporting a misleading `0`. There's no per-year longest-streak column — years older than the cache-fold cutoff are stored as plain counts, not individual dates, so there's nothing to compute a streak from. `payments` is the raw monthly log as a list of `{year, month, cost}` dicts, newest month first -- one row per `monthly_costs` entry, for a payment-history table on the dashboard.
 
+`sensor.gym_weekly_sessions` is the same table-sensor pattern applied to a trend chart instead of a table: its state is the total session count across the window, and its `weeks` attribute is a list of `{week_start, sessions}` dicts (ISO Monday-start weeks, oldest first, `WEEKLY_CHART_WEEKS` of them) for a card like `apexcharts-card`'s `data_generator` to plot. The most recent row is the current, still-in-progress week rather than stopping at the last completed one. It reuses the same in-memory `gym_dates_after_cutoff` set the coordinator already fetches for the streak calculation rather than issuing a separate `calendar.get_events` call -- safe because `WEEKLY_CHART_WEEKS` is kept comfortably under `CACHE_FOLD_AFTER_DAYS / 7`, so that set is guaranteed to already cover the whole window.
+
 ## Integration structure
 
 ```
@@ -41,7 +43,7 @@ custom_components/gym_tracker/
   coordinator.py      # event-driven DataUpdateCoordinator: zone detection, calendar listening, daily tick, caching
   config_flow.py      # setup form + options flow (monthly cost) + the shared schema repairs.py reuses
   repairs.py          # fix flow for the "missing current month's cost" issue
-  sensor.py            # the total/this-year/streak/cost/yearly-stats sensors
+  sensor.py            # the total/this-year/streak/cost/yearly-stats/weekly-sessions sensors
   binary_sensor.py     # session-ongoing sensor
   services.yaml         # rebuild_cache service definition
 ```

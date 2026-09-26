@@ -28,6 +28,11 @@ STREAK_LOOKBACK_DAYS = 90
 # persisted cache rather than re-fetched every refresh -- see coordinator.py.
 CACHE_FOLD_AFTER_DAYS = 90
 
+# How many trailing ISO weeks the weekly-sessions chart sensor covers. Must
+# stay well under CACHE_FOLD_AFTER_DAYS/7 (~12.8 weeks), since the folded
+# cache only guarantees individual dates are still available that far back.
+WEEKLY_CHART_WEEKS = 12
+
 DAILY_REFRESH_HOUR = 0
 DAILY_REFRESH_MINUTE = 5
 
