@@ -27,6 +27,7 @@ from .calculations import (
     compute_streak,
     compute_yearly_stats,
     dedupe_event_dates,
+    format_monthly_payments,
     months_missing_cost,
 )
 from .const import (
@@ -304,6 +305,7 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 monthly_cost, sessions_this_year
             ),
             "yearly_stats": yearly_stats,
+            "monthly_payments": format_monthly_payments(monthly_costs),
             "session_ongoing": self._session_ongoing,
             "session_start": self._session_start,
         }

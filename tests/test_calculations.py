@@ -10,6 +10,7 @@ from custom_components.gym_tracker.calculations import (
     compute_streak,
     compute_yearly_stats,
     dedupe_event_dates,
+    format_monthly_payments,
     months_missing_cost,
 )
 
@@ -163,3 +164,22 @@ class TestMonthsMissingCost:
     def test_fully_covered_range_returns_empty(self):
         costs = {f"2025-{m:02d}": 59.90 for m in range(1, 12)}
         assert months_missing_cost({2025}, costs, TODAY) == []
+
+
+class TestFormatMonthlyPayments:
+    def test_empty_costs_returns_empty_list(self):
+        assert format_monthly_payments({}) == []
+
+    def test_rows_are_newest_month_first(self):
+        rows = format_monthly_payments(
+            {"2025-01": 59.90, "2025-03": 59.90, "2025-02": 59.90}
+        )
+        assert [(r["year"], r["month"]) for r in rows] == [
+            (2025, 3),
+            (2025, 2),
+            (2025, 1),
+        ]
+
+    def test_row_shape_and_cost_value(self):
+        rows = format_monthly_payments({"2025-06": 67.90})
+        assert rows == [{"year": 2025, "month": 6, "cost": 67.90}]

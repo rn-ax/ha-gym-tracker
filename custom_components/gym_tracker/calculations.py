@@ -93,6 +93,22 @@ def months_missing_cost(
     return missing
 
 
+def format_monthly_payments(monthly_costs: dict[str, float]) -> list[dict[str, Any]]:
+    """Turn `monthly_costs` into a dashboard-ready row list, newest first.
+
+    A separate function (rather than just exposing the raw dict) because a
+    dashboard table card needs a list of same-shaped rows, not a
+    "YYYY-MM" -> float mapping.
+    """
+    rows = []
+    for month_key in sorted(monthly_costs, reverse=True):
+        year, month = month_key.split("-")
+        rows.append(
+            {"year": int(year), "month": int(month), "cost": monthly_costs[month_key]}
+        )
+    return rows
+
+
 def compute_yearly_stats(
     sessions_by_year_before_cutoff: dict[str, int],
     gym_dates_after_cutoff: set[date],
@@ -137,9 +153,7 @@ def compute_yearly_stats(
                 "avg_per_week": round(sessions / weeks_elapsed, 1),
                 "total_cost": total_cost,
                 "cost_per_session": (
-                    round(total_cost / sessions, 2)
-                    if total_cost and sessions
-                    else None
+                    round(total_cost / sessions, 2) if total_cost and sessions else None
                 ),
             }
         )
