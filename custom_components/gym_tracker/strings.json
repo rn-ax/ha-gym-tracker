@@ -31,8 +31,8 @@
       "fix_flow": {
         "step": {
           "confirm": {
-            "title": "Enter this month's gym cost",
-            "description": "No cost has been entered yet for {month}/{year}. The cost-per-session sensor stays unavailable until this is set.",
+            "title": "Enter gym cost for {month}/{year}",
+            "description": "No cost has been entered yet for {month}/{year}. This feeds the yearly stats table, and also the cost-per-session sensor if it's the current month.",
             "data": {
               "year": "Year",
               "month": "Month",

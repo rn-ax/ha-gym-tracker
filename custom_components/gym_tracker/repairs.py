@@ -1,11 +1,13 @@
-"""Repair fix flow for a missing current-month cost.
+"""Repair fix flow for a missing month's cost.
 
-Reuses the options flow's own form so the two entry points (Settings ->
-Repairs, and the integration's own options) can never drift apart. The fix
-flow itself only writes the config entry option and reloads it -- the
-coordinator's own _sync_missing_cost_issue is what actually clears the
-issue, on the refresh that reload triggers, so a fix applied through
-regular options (bypassing this flow entirely) still clears it correctly.
+One issue (and one instance of this flow) exists per calendar month since
+tracking began that has no cost entry yet -- see the coordinator's
+_sync_missing_cost_issues. Reuses the options flow's own form so the two
+entry points (Settings -> Repairs, and the integration's own options) can
+never drift apart. The fix flow itself only writes the config entry option
+and reloads it -- the coordinator is what actually clears the issue, on
+the refresh that reload triggers, so a fix applied through regular options
+(bypassing this flow entirely) still clears it correctly.
 """
 
 from __future__ import annotations

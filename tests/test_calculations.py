@@ -10,6 +10,7 @@ from custom_components.gym_tracker.calculations import (
     compute_streak,
     compute_yearly_stats,
     dedupe_event_dates,
+    months_missing_cost,
 )
 
 TODAY = date(2025, 11, 9)
@@ -135,3 +136,30 @@ class TestComputeYearlyStats:
         row = compute_yearly_stats({}, dates("2025-01-05"), {}, TODAY)[0]
         elapsed_weeks = ((TODAY - date(2025, 1, 1)).days + 1) / 7
         assert row["avg_per_week"] == round(1 / elapsed_weeks, 1)
+
+
+class TestMonthsMissingCost:
+    def test_no_tracked_years_returns_empty(self):
+        assert months_missing_cost(set(), {}, TODAY) == []
+
+    def test_no_costs_at_all_flags_every_month_from_january(self):
+        # TODAY is 2025-11-09, so January through November are owed.
+        assert months_missing_cost({2025}, {}, TODAY) == [
+            (2025, m) for m in range(1, 12)
+        ]
+
+    def test_filled_months_are_excluded(self):
+        costs = {f"2025-{m:02d}": 59.90 for m in range(1, 6)}
+        assert months_missing_cost({2025}, costs, TODAY) == [
+            (2025, m) for m in range(6, 12)
+        ]
+
+    def test_starts_from_the_earliest_tracked_year(self):
+        missing = months_missing_cost({2024, 2025}, {}, TODAY)
+        assert missing[0] == (2024, 1)
+        assert missing[-1] == (2025, 11)
+        assert len(missing) == 12 + 11
+
+    def test_fully_covered_range_returns_empty(self):
+        costs = {f"2025-{m:02d}": 59.90 for m in range(1, 12)}
+        assert months_missing_cost({2025}, costs, TODAY) == []
