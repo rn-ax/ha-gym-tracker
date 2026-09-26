@@ -13,6 +13,7 @@ from typing import Any
 
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.event import (
     async_call_later,
     async_track_state_change_event,
@@ -71,6 +72,24 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._pending_start_cancel = None
 
         self._unsub: list = []
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Shared device every entity attaches to, so they group on one page.
+
+        `entity_id` is pinned explicitly on each entity (see sensor.py),
+        and every dashboard card overrides its own display name, so
+        grouping under a device doesn't touch either of those -- the only
+        visible effect is the "Gym Tracker" name prefix in places with no
+        override, like Developer Tools' entity list.
+        """
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.entry.entry_id)},
+            name="Gym Tracker",
+            manufacturer="rn-ax",
+            model="Gym Tracker",
+            entry_type=DeviceEntryType.SERVICE,
+        )
 
     async def async_setup(self) -> None:
         """Load the persisted cache and wire up all listeners."""
