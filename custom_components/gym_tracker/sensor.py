@@ -24,6 +24,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             GymSessionsTotalSensor(coordinator, entry.entry_id),
+            GymSessionsThisYearSensor(coordinator, entry.entry_id),
             GymSessionStreakSensor(coordinator, entry.entry_id),
             GymCostPerSessionSensor(coordinator, entry.entry_id),
         ]
@@ -69,6 +70,26 @@ class GymSessionsTotalSensor(_GymSensorBase):
     @property
     def native_value(self):
         return self.coordinator.data["total_sessions"]
+
+
+class GymSessionsThisYearSensor(_GymSensorBase):
+    # New (not a legacy AppDaemon entity_id) -- the old system never
+    # exposed a year-scoped count, only the all-time total, which is what
+    # led to dashboards mislabeling that all-time total as "this year".
+    entity_id = "sensor.gym_sessions_this_year"
+    _attr_has_entity_name = False
+    _attr_name = "Gym sessions this year"
+    _attr_icon = "mdi:dumbbell"
+    _attr_native_unit_of_measurement = "sessions"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry_id):
+        super().__init__(coordinator, entry_id)
+        self._attr_unique_id = f"{entry_id}_sessions_this_year"
+
+    @property
+    def native_value(self):
+        return self.coordinator.data["sessions_this_year"]
 
 
 class GymSessionStreakSensor(_GymSensorBase):

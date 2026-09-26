@@ -1,6 +1,6 @@
 # ha-gym-tracker
 
-A Home Assistant **custom integration** (`custom_components/gym_tracker/`) that turns a calendar of workout events into three sensors (total sessions, day streak, cost per session), plus zone-based auto-detection that creates those calendar events without any manual logging.
+A Home Assistant **custom integration** (`custom_components/gym_tracker/`) that turns a calendar of workout events into four sensors (all-time total sessions, sessions this year, day streak, cost per session), plus zone-based auto-detection that creates those calendar events without any manual logging.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ This integration's code goes to `/config/custom_components/gym_tracker/` on what
 
 ## Legacy entity_ids
 
-`sensor.gym_sessions_total`, `sensor.gym_session_streak`, and `sensor.gym_cost_per_session` deliberately match the entity_ids from the AppDaemon apps this integration replaces (`_attr_has_entity_name = False` with a name that slugifies to the same id), so existing dashboards keep working across the migration. `binary_sensor.gym_session_ongoing` is new — it replaces `input_boolean.gym_session_ongoing` from the old zone-detection automations, and carries a `session_start` attribute for a possible future iOS Live Activity automation to use.
+`sensor.gym_sessions_total`, `sensor.gym_session_streak`, and `sensor.gym_cost_per_session` deliberately match the entity_ids from the AppDaemon apps this integration replaces (`_attr_has_entity_name = False` with a name that slugifies to the same id), so existing dashboards keep working across the migration. `binary_sensor.gym_session_ongoing` is new — it replaces `input_boolean.gym_session_ongoing` from the old zone-detection automations, and carries a `session_start` attribute for a possible future iOS Live Activity automation to use. `sensor.gym_sessions_this_year` is also new — the AppDaemon apps never exposed a year-scoped count, only the all-time total, which is what led dashboards to bind a "this year" tile to `sensor.gym_sessions_total` by mistake.
 
 ## Integration structure
 

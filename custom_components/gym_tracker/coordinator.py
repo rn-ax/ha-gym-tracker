@@ -284,6 +284,7 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return {
             "total_sessions": total_sessions,
+            "sessions_this_year": sessions_this_year,
             "streak": compute_streak(streak_dates, today),
             "cost_per_session": compute_cost_per_session(
                 monthly_cost, sessions_this_year

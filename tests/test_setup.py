@@ -70,11 +70,13 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
     await hass.async_block_till_done()
 
     total = hass.states.get("sensor.gym_sessions_total")
+    this_year = hass.states.get("sensor.gym_sessions_this_year")
     streak = hass.states.get("sensor.gym_session_streak")
     cost = hass.states.get("sensor.gym_cost_per_session")
     ongoing = hass.states.get("binary_sensor.gym_session_ongoing")
 
     assert total is not None and total.state == "2"  # two "Gym"-summary days
+    assert this_year is not None and this_year.state == "2"  # both are this year
     # 3: today + yesterday (Gym) + the day before (Walk) -- a walk still
     # counts toward the streak, just not toward the gym-specific total/cost.
     assert streak is not None and streak.state == "3"
@@ -86,6 +88,7 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
     # has_entity_name, so a device here would produce e.g. "Gym Tracker Gym
     # session streak" instead of "Gym session streak".
     assert total.attributes["friendly_name"] == "Gym sessions total"
+    assert this_year.attributes["friendly_name"] == "Gym sessions this year"
     assert streak.attributes["friendly_name"] == "Gym session streak"
     assert cost.attributes["friendly_name"] == "Gym cost per session"
     assert ongoing.attributes["friendly_name"] == "Gym session ongoing"
