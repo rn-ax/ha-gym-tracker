@@ -27,6 +27,7 @@ from .calculations import (
     compute_streak,
     compute_yearly_stats,
     dedupe_event_dates,
+    months_missing_cost,
 )
 from .const import (
     CACHE_FOLD_AFTER_DAYS,
@@ -285,7 +286,15 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         current_month_key = f"{today.year:04d}-{today.month:02d}"
         monthly_costs = self.entry.options.get("monthly_costs", {})
         monthly_cost = monthly_costs.get(current_month_key)
-        self._sync_missing_cost_issue(monthly_cost, today)
+
+        yearly_stats = compute_yearly_stats(
+            self._gym_sessions_by_year_before_cutoff,
+            gym_dates_after_cutoff,
+            monthly_costs,
+            today,
+        )
+        tracked_years = {row["year"] for row in yearly_stats}
+        self._sync_missing_cost_issues(tracked_years, monthly_costs, today)
 
         return {
             "total_sessions": total_sessions,
@@ -294,19 +303,27 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "cost_per_session": compute_cost_per_session(
                 monthly_cost, sessions_this_year
             ),
-            "yearly_stats": compute_yearly_stats(
-                self._gym_sessions_by_year_before_cutoff,
-                gym_dates_after_cutoff,
-                monthly_costs,
-                today,
-            ),
+            "yearly_stats": yearly_stats,
             "session_ongoing": self._session_ongoing,
             "session_start": self._session_start,
         }
 
-    def _sync_missing_cost_issue(self, monthly_cost: float | None, today: date) -> None:
-        issue_id = f"missing_monthly_cost_{self.entry.entry_id}"
-        if monthly_cost is None:
+    def _sync_missing_cost_issues(
+        self, tracked_years: set[int], monthly_costs: dict[str, float], today: date
+    ) -> None:
+        """Raise one repair issue per calendar month with no cost entry.
+
+        Covers every month since tracking began, not just the current one
+        -- a single "current month" check silently drops a gap the moment
+        the month rolls over, which is exactly how a whole year went
+        unfilled before this was caught by hand.
+        """
+        prefix = f"missing_monthly_cost_{self.entry.entry_id}_"
+        active_issue_ids = set()
+
+        for year, month in months_missing_cost(tracked_years, monthly_costs, today):
+            issue_id = f"{prefix}{year:04d}_{month:02d}"
+            active_issue_ids.add(issue_id)
             ir.async_create_issue(
                 self.hass,
                 DOMAIN,
@@ -314,15 +331,15 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 is_fixable=True,
                 severity=ir.IssueSeverity.WARNING,
                 translation_key="missing_monthly_cost",
-                translation_placeholders={
-                    "year": str(today.year),
-                    "month": f"{today.month:02d}",
-                },
-                data={
-                    "entry_id": self.entry.entry_id,
-                    "year": today.year,
-                    "month": today.month,
-                },
+                translation_placeholders={"year": str(year), "month": f"{month:02d}"},
+                data={"entry_id": self.entry.entry_id, "year": year, "month": month},
             )
-        else:
-            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+
+        issue_registry = ir.async_get(self.hass)
+        for domain, issue_id in list(issue_registry.issues):
+            if (
+                domain == DOMAIN
+                and issue_id.startswith(prefix)
+                and issue_id not in active_issue_ids
+            ):
+                ir.async_delete_issue(self.hass, DOMAIN, issue_id)

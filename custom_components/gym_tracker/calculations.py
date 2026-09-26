@@ -69,6 +69,30 @@ def compute_cost_per_session(
     return round((monthly_cost * 12) / sessions_this_year, 2)
 
 
+def months_missing_cost(
+    tracked_years: set[int], monthly_costs: dict[str, float], today: date
+) -> list[tuple[int, int]]:
+    """Every (year, month) from the start of tracking through today with no cost entry.
+
+    A membership is billed monthly regardless of whether that particular
+    month had any gym visits, so this checks calendar months, not gym
+    dates -- "start of tracking" is January of the earliest tracked year,
+    since that's the earliest month a cost could plausibly be owed for.
+    """
+    if not tracked_years:
+        return []
+
+    year, month = min(tracked_years), 1
+    missing = []
+    while (year, month) <= (today.year, today.month):
+        if f"{year:04d}-{month:02d}" not in monthly_costs:
+            missing.append((year, month))
+        month += 1
+        if month > 12:
+            year, month = year + 1, 1
+    return missing
+
+
 def compute_yearly_stats(
     sessions_by_year_before_cutoff: dict[str, int],
     gym_dates_after_cutoff: set[date],

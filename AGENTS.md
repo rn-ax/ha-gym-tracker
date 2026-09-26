@@ -18,7 +18,7 @@ Calendar data older than ~3 months is treated as immutable and folded into a `ho
 
 ## Config vs. options
 
-The config flow (`calendar_entity`, `tracked_person`, `gym_zones`) has no defaults — this is meant to be a generic, shareable integration, not one hardcoded to any specific household's entities. Cost is tracked separately, per month (`entry.options["monthly_costs"]["YYYY-MM"]`), since it's billed monthly and can change mid-year. A missing current-month cost raises a fixable issue via `homeassistant.helpers.issue_registry` (see `repairs.py`) rather than just leaving `sensor.gym_cost_per_session` silently unavailable — the fix flow and the options flow share the exact same form (`config_flow.monthly_cost_schema`) so they can't drift apart.
+The config flow (`calendar_entity`, `tracked_person`, `gym_zones`) has no defaults — this is meant to be a generic, shareable integration, not one hardcoded to any specific household's entities. Cost is tracked separately, per month (`entry.options["monthly_costs"]["YYYY-MM"]`), since it's billed monthly and can change mid-year. Every month since tracking began that has no cost entry raises its own fixable issue via `homeassistant.helpers.issue_registry` (see `repairs.py` and `coordinator._sync_missing_cost_issues`/`calculations.months_missing_cost`) rather than just leaving `sensor.gym_cost_per_session` silently unavailable — checking only the current month would let a gap go unnoticed forever the moment the month rolls over, which is exactly what happened before this was added. The fix flow and the options flow share the exact same form (`config_flow.monthly_cost_schema`) so they can't drift apart.
 
 ## Where this deploys
 
