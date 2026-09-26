@@ -22,7 +22,12 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
-from .calculations import compute_cost_per_session, compute_streak, dedupe_event_dates
+from .calculations import (
+    compute_cost_per_session,
+    compute_streak,
+    compute_yearly_stats,
+    dedupe_event_dates,
+)
 from .const import (
     CACHE_FOLD_AFTER_DAYS,
     CONF_CALENDAR_ENTITY,
@@ -288,6 +293,12 @@ class GymTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "streak": compute_streak(streak_dates, today),
             "cost_per_session": compute_cost_per_session(
                 monthly_cost, sessions_this_year
+            ),
+            "yearly_stats": compute_yearly_stats(
+                self._gym_sessions_by_year_before_cutoff,
+                gym_dates_after_cutoff,
+                monthly_costs,
+                today,
             ),
             "session_ongoing": self._session_ongoing,
             "session_start": self._session_start,
