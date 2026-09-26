@@ -1,4 +1,4 @@
-_extends: poppycock
+_extends: poppycock:settings.yml
 
 repository:
   name: ha-gym-tracker
