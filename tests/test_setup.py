@@ -13,6 +13,8 @@ from homeassistant.core import (
     ServiceResponse,
     SupportsResponse,
 )
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -114,15 +116,34 @@ async def test_setup_creates_legacy_entity_ids_with_real_values(
         "sessions": current_week_sessions,
     }
 
-    # No device grouping -- HA's naming logic prefixes the device name onto
-    # an auto-named entity's displayed friendly_name regardless of
-    # has_entity_name, so a device here would produce e.g. "Gym Tracker Gym
-    # session streak" instead of "Gym session streak".
+    # `_attr_has_entity_name = False` means each entity's own `_attr_name`
+    # is used as the friendly_name verbatim -- HA does not prepend the
+    # device name in that case, so grouping under a device (below) doesn't
+    # change these legacy-matching names.
     assert total.attributes["friendly_name"] == "Gym sessions total"
     assert this_year.attributes["friendly_name"] == "Gym sessions this year"
     assert streak.attributes["friendly_name"] == "Gym session streak"
     assert cost.attributes["friendly_name"] == "Gym cost per session"
     assert ongoing.attributes["friendly_name"] == "Gym session ongoing"
+
+    # Every entity groups onto one "Gym Tracker" device, so it gets a real
+    # device page (entity list, logbook) in Settings -> Devices & Services.
+    device_registry = dr.async_get(hass)
+    device = device_registry.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
+    assert device is not None and device.name == "Gym Tracker"
+
+    entity_registry = er.async_get(hass)
+    for entity_id in [
+        "sensor.gym_sessions_total",
+        "sensor.gym_sessions_this_year",
+        "sensor.gym_session_streak",
+        "sensor.gym_cost_per_session",
+        "sensor.gym_yearly_stats",
+        "sensor.gym_weekly_sessions",
+        "binary_sensor.gym_session_ongoing",
+    ]:
+        registry_entry = entity_registry.async_get(entity_id)
+        assert registry_entry is not None and registry_entry.device_id == device.id
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

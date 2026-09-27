@@ -41,6 +41,7 @@ class GymSessionOngoingBinarySensor(
         super().__init__(coordinator)
         self._entry_id = entry_id
         self._attr_unique_id = f"{entry_id}_session_ongoing"
+        self._attr_device_info = coordinator.device_info
 
     @property
     def is_on(self) -> bool:

@@ -32,6 +32,10 @@ This integration's code goes to `/config/custom_components/gym_tracker/` on what
 
 `sensor.gym_weekly_sessions` is the same table-sensor pattern applied to a trend chart instead of a table: its state is the total session count across the window, and its `weeks` attribute is a list of `{week_start, sessions}` dicts (ISO Monday-start weeks, oldest first, `WEEKLY_CHART_WEEKS` of them) for a card like `apexcharts-card`'s `data_generator` to plot. The most recent row is the current, still-in-progress week rather than stopping at the last completed one. It reuses the same in-memory `gym_dates_after_cutoff` set the coordinator already fetches for the streak calculation rather than issuing a separate `calendar.get_events` call -- safe because `WEEKLY_CHART_WEEKS` is kept comfortably under `CACHE_FOLD_AFTER_DAYS / 7`, so that set is guaranteed to already cover the whole window.
 
+## Device grouping
+
+Every entity attaches to one shared "Gym Tracker" device (`GymTrackerCoordinator.device_info`, a `DeviceEntryType.SERVICE` device since nothing here corresponds to physical hardware) so they show up together on one device page instead of a flat, ungrouped entity list. This is safe alongside the legacy entity_id/name matching above: `entity_id` is pinned explicitly per entity regardless of device, and `_attr_has_entity_name = False` means HA uses each entity's own `_attr_name` as the friendly_name verbatim rather than prefixing the device name onto it (verified in `tests/test_setup.py`'s device-registry assertions) -- the device name only shows up in places with no per-entity name override, like Developer Tools' entity list.
+
 ## Integration structure
 
 ```
